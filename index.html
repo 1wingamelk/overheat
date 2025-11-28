@@ -611,7 +611,7 @@
 
     /* -------- Множитель -------- */
     function updateMultiplierUI() {
-        multiplierEl.textContent = 'x' + multiplier.toFixed(2);
+        multiplierEl.textContent = 'm' + multiplier.toFixed(2);
     }
 
     function startGrowing() {
@@ -805,7 +805,7 @@
 
         const el = document.createElement('div');
         el.className = 'bonus-text';
-        el.textContent = '+x' + bonus.toFixed(2);
+        el.textContent = '+m' + bonus.toFixed(2);
         el.style.left = x + 'px';
         el.style.top  = y + 'px';
         gameEl.appendChild(el);
@@ -994,8 +994,8 @@
         const win = bet * multiplier;
         demoBalance += win;
         balanceValueEl.textContent = demoBalance.toFixed(2);
-        resultMultEl.textContent = 'x' + multiplier.toFixed(2);
-        lastMultEl.textContent   = multiplier.toFixed(2) + 'x';
+        resultMultEl.textContent = 'm' + multiplier.toFixed(2);
+        lastMultEl.textContent   = multiplier.toFixed(2) + 'm';
         cashoutAmount.textContent = win.toFixed(2) + ' ₽';
 
         multiplierEl.classList.add('hidden');
@@ -1067,4 +1067,5 @@
 </body>
 
 </html>
+
 
