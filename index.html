@@ -36,6 +36,78 @@
             --chest-frames: 30;
         }
 
+        /* ---------- Языковая панель ---------- */
+        .language-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        
+        .language-toggle:hover {
+            opacity: 1;
+        }
+        
+        .language-panel {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 99;
+            display: none;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .language-panel.visible {
+            display: block;
+        }
+        
+        .language-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .language-option:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .language-option.active {
+            background: rgba(77, 165, 255, 0.3);
+        }
+        
+        .flag {
+            width: 24px;
+            height: 16px;
+            margin-right: 10px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 2px;
+        }
+        
+        .language-name {
+            flex-grow: 1;
+        }
+        
+        .currency-symbol {
+            font-weight: bold;
+            color: #7dff9d;
+        }
+
         /* ---------- Водные частицы ---------- */
 
         .water-fx {
@@ -409,6 +481,41 @@
 </head>
 <body>
 <div class="game">
+    
+    <!-- Языковая панель -->
+    <button class="language-toggle" id="languageToggle">🌐</button>
+    <div class="language-panel" id="languagePanel">
+        <div class="language-option active" data-lang="ru" data-currency="₽" data-flag="🇷🇺">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"white\"/><rect width=\"24\" height=\"5.33\" fill=\"%23003aa0\"/><rect y=\"10.67\" width=\"24\" height=\"5.33\" fill=\"%23d52b1e\"/></svg>')"></div>
+            <span class="language-name">Русский</span>
+            <span class="currency-symbol">₽</span>
+        </div>
+        <div class="language-option" data-lang="en" data-currency="$" data-flag="🇺🇸">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%2300227a\"/><path fill=\"%23fff\" d=\"M0 0h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0z\"/><path fill=\"%23bf0a30\" d=\"M0 0h10v9H0z\"/><path fill=\"%23fff\" d=\"M1 1h1v1H1zm2 0h1v1H3zm4 0h1v1H7zm2 0h1v1H9zM0 3h1v1H0zm2 0h1v1H2zm4 0h1v1H6zm6 0h1v1h-1zM1 5h1v1H1zm2 0h1v1H3zm4 0h1v1H7zm2 0h1v1H9zM0 7h1v1H0zm2 0h1v1H2zm4 0h1v1H6zm6 0h1v1h-1z\"/></svg>')"></div>
+            <span class="language-name">English</span>
+            <span class="currency-symbol">$</span>
+        </div>
+        <div class="language-option" data-lang="in" data-currency="₹" data-flag="🇮🇳">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23f93\"/><rect width=\"24\" height=\"5.33\" fill=\"%23fff\"/><rect y=\"10.67\" width=\"24\" height=\"5.33\" fill=\"%23128807\"/><circle cx=\"12\" cy=\"8\" r=\"2.67\" fill=\"%23006699\"/></svg>')"></div>
+            <span class="language-name">हिन्दी</span>
+            <span class="currency-symbol">₹</span>
+        </div>
+        <div class="language-option" data-lang="tr" data-currency="₺" data-flag="🇹🇷">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23e30a17\"/><circle cx=\"12\" cy=\"8\" r=\"4\" fill=\"%23fff\"/><circle cx=\"12.8\" cy=\"8\" r=\"3.2\" fill=\"%23e30a17\"/><path fill=\"%23fff\" d=\"M12 6l1 2h2l-1.5 1.5L15 11l-2-1-1 2v-2l-1-2-2 1 1.5-1.5L9 7l2 1z\"/></svg>')"></div>
+            <span class="language-name">Türkçe</span>
+            <span class="currency-symbol">₺</span>
+        </div>
+        <div class="language-option" data-lang="id" data-currency="Rp" data-flag="🇮🇩">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"8\" fill=\"%23fff\"/><rect y=\"8\" width=\"24\" height=\"8\" fill=\"%23e30a17\"/></svg>')"></div>
+            <span class="language-name">Bahasa Indonesia</span>
+            <span class="currency-symbol">Rp</span>
+        </div>
+        <div class="language-option" data-lang="eu" data-currency="€" data-flag="🇪🇺">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23003f8d\"/><circle cx=\"12\" cy=\"8\" r=\"4\" fill=\"%23ffcd00\"/><circle cx=\"12\" cy=\"8\" r=\"3.2\" fill=\"%23003f8d\"/><path fill=\"%23ffcd00\" d=\"M12 5l1 2h2l-1.5 1.5L15 11l-2-1-1 2v-2l-1-2-2 1 1.5-1.5L9 7l2 1z\"/></svg>')"></div>
+            <span class="language-name">Euro</span>
+            <span class="currency-symbol">€</span>
+        </div>
+    </div>
 
     <!-- Водные частицы -->
     <div class="water-fx" id="waterFx"></div>
@@ -437,7 +544,7 @@
     <div class="result hidden" id="resultBlock">
         <div class="result-mult" id="resultMult">m1.00</div>
         <div class="result-text">
-            You received <span id="resultWinAmount">0.00 ₹</span>
+            <span data-translate="you_received">You received</span> <span id="resultWinAmount">0.00</span>
         </div>
     </div>
 
@@ -445,12 +552,12 @@
     <div class="hold-area">
         <button class="hold-btn" id="holdBtn"
                 aria-label="Удерживайте, чтобы сделать ставку"></button>
-        <div class="hold-label">Удерживайте, чтобы начать</div>
+        <div class="hold-label" data-translate="hold_to_start">Удерживайте, чтобы начать</div>
     </div>
 
     <!-- Панель ставок / кэшаут -->
     <div class="bet-area">
-        <div class="bet-header">Больше ставок</div>
+        <div class="bet-header" data-translate="more_bets">Больше ставок</div>
 
         <div class="bet-main" id="betMain">
             <button class="bet-btn" id="btnHalf">½</button>
@@ -462,18 +569,18 @@
         </div>
 
         <button class="cashout-main" id="cashoutMain">
-            <div class="cashout-amount">0.00 ₹</div>
-            <div class="cashout-label">ЗАБРАТЬ</div>
+            <div class="cashout-amount">0.00</div>
+            <div class="cashout-label" data-translate="cashout">ЗАБРАТЬ</div>
         </button>
 
         <div class="bet-footer">
-            <div class="autoplay disabled">Автоигра</div>
+            <div class="autoplay disabled" data-translate="autoplay">Автоигра</div>
             <div class="last-mult disabled" id="lastMult">0.00m</div>
         </div>
     </div>
 
     <div class="balance-bar">
-        Баланс: <span id="balanceValue">10000.00</span> ₹
+        <span data-translate="balance">Баланс:</span> <span id="balanceValue">10000.00</span>
     </div>
 </div>
 
@@ -507,6 +614,11 @@
 
     const sideLeft     = document.getElementById('sideLeft');
     const sideRight    = document.getElementById('sideRight');
+    
+    // Языковые элементы
+    const languageToggle = document.getElementById('languageToggle');
+    const languagePanel = document.getElementById('languagePanel');
+    const languageOptions = document.querySelectorAll('.language-option');
 
     /* --- Константы --- */
     const WATER_SPEED  = 120; // px/сек
@@ -538,6 +650,11 @@
     let growTimer = null;
     let demoBalance = 10000;
 
+    // Текущие настройки языка и валюты
+    let currentLang = 'ru';
+    let currentCurrency = '₽';
+    let currencySymbol = '₽';
+
     // лодка: плавный поворот
     let boatOffsetX = 0;
     let boatTargetOffsetX = 0;
@@ -565,6 +682,125 @@
     // вода
     let bubbleTimer = 0;
     let waveTimer   = 0;
+    
+    // Переводы
+    const translations = {
+        ru: {
+            hold_to_start: "Удерживайте, чтобы начать",
+            more_bets: "Больше ставок",
+            cashout: "ЗАБРАТЬ",
+            autoplay: "Автоигра",
+            balance: "Баланс:",
+            you_received: "Вы получили"
+        },
+        en: {
+            hold_to_start: "Hold to start",
+            more_bets: "More bets",
+            cashout: "CASHOUT",
+            autoplay: "Autoplay",
+            balance: "Balance:",
+            you_received: "You received"
+        },
+        in: {
+            hold_to_start: "शुरू करने के लिए होल्ड करें",
+            more_bets: "अधिक बेट",
+            cashout: "कैशआउट",
+            autoplay: "ऑटोप्ले",
+            balance: "बैलेंस:",
+            you_received: "आपको प्राप्त हुआ"
+        },
+        tr: {
+            hold_to_start: "Başlamak için basılı tutun",
+            more_bets: "Daha fazla bahis",
+            cashout: "ÇEKİL",
+            autoplay: "Otomatik Oyun",
+            balance: "Bakiye:",
+            you_received: "Aldınız"
+        },
+        id: {
+            hold_to_start: "Tahan untuk mulai",
+            more_bets: "Taruhan lebih banyak",
+            cashout: "TARIK DANA",
+            autoplay: "Main Otomatis",
+            balance: "Saldo:",
+            you_received: "Anda menerima"
+        },
+        eu: {
+            hold_to_start: "Hold to start",
+            more_bets: "More bets",
+            cashout: "CASHOUT",
+            autoplay: "Autoplay",
+            balance: "Balance:",
+            you_received: "You received"
+        }
+    };
+
+    /* -------- Язык и валюта -------- */
+    function toggleLanguagePanel() {
+        languagePanel.classList.toggle('visible');
+    }
+    
+    function setLanguage(lang, currency) {
+        currentLang = lang;
+        currentCurrency = currency;
+        currencySymbol = currency;
+        
+        // Обновляем активный элемент
+        languageOptions.forEach(option => {
+            if (option.dataset.lang === lang) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+        
+        // Применяем переводы
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[lang] && translations[lang][key]) {
+                element.textContent = translations[lang][key];
+            }
+        });
+        
+        // Обновляем отображение валюты
+        updateCurrencyDisplay();
+        languagePanel.classList.remove('visible');
+    }
+    
+    function updateCurrencyDisplay() {
+        // Обновляем баланс с новой валютой
+        balanceValueEl.textContent = demoBalance.toFixed(2);
+        
+        // Обновляем отображение выигрыша
+        const currentWin = parseFloat(resultWinEl.textContent) || 0;
+        if (currentWin > 0) {
+            resultWinEl.textContent = currentWin.toFixed(2) + ' ' + currencySymbol;
+        }
+        
+        // Обновляем кэшаут
+        const cashoutCurrent = parseFloat(cashoutAmount.textContent) || 0;
+        if (cashoutCurrent > 0) {
+            cashoutAmount.textContent = cashoutCurrent.toFixed(2) + ' ' + currencySymbol;
+        }
+    }
+    
+    // Инициализация языковых обработчиков
+    languageToggle.addEventListener('click', toggleLanguagePanel);
+    
+    languageOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const lang = option.dataset.lang;
+            const currency = option.dataset.currency;
+            setLanguage(lang, currency);
+        });
+    });
+    
+    // Закрытие панели при клике вне её
+    document.addEventListener('click', (e) => {
+        if (!languagePanel.contains(e.target) && !languageToggle.contains(e.target)) {
+            languagePanel.classList.remove('visible');
+        }
+    });
 
     /* -------- Лодка: спрайт -------- */
     function updateBoatFrame() {
@@ -647,6 +883,23 @@
         if (!v || v <= 0) v = 0.01;
         betInput.value = v.toFixed(2);
     }
+    
+    // Функция для уменьшения баланса при ставке
+    function placeBet() {
+        const bet = getBet();
+        if (!bet) return false;
+        
+        if (demoBalance >= bet) {
+            demoBalance -= bet;
+            balanceValueEl.textContent = demoBalance.toFixed(2);
+            return true;
+        } else {
+            // Недостаточно средств
+            betInput.classList.add('error');
+            return false;
+        }
+    }
+    
     const BET_STEP = 1;
     btnHalf  .addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)/2); });
     btnDouble.addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)*2); });
@@ -982,7 +1235,7 @@
                 current = target;
                 clearInterval(timer);
             }
-            resultWinEl.textContent = '+' + current.toFixed(2) + ' ₺';
+            resultWinEl.textContent = current.toFixed(2) + ' ' + currencySymbol;
         }, 1000 / fps);
     }
     function playSailAway() {
@@ -996,7 +1249,7 @@
         balanceValueEl.textContent = demoBalance.toFixed(2);
         resultMultEl.textContent = 'm' + multiplier.toFixed(2);
         lastMultEl.textContent   = multiplier.toFixed(2) + 'm';
-        cashoutAmount.textContent = win.toFixed(2) + ' ₺';
+        cashoutAmount.textContent = win.toFixed(2) + ' ' + currencySymbol;
 
         multiplierEl.classList.add('hidden');
         resultBlock.classList.remove('hidden');
@@ -1026,11 +1279,20 @@
     holdBtn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         if (state !== 'idle') return;
+        
+        // Проверяем и делаем ставку
         const bet = getBet();
         if (!bet) {
             betInput.classList.add('error');
             return;
         }
+        
+        // Уменьшаем баланс при ставке
+        if (!placeBet()) {
+            // Недостаточно средств
+            return;
+        }
+        
         betInput.classList.remove('error');
         state = 'running';
         resultBlock.classList.add('hidden');
@@ -1065,11 +1327,4 @@
     applyBoatTransform();
 </script>
 </body>
-
 </html>
-
-
-
-
-
-
