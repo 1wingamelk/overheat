@@ -982,7 +982,7 @@
                 current = target;
                 clearInterval(timer);
             }
-            resultWinEl.textContent = '+' + current.toFixed(2) + ' ₹';
+            resultWinEl.textContent = '+' + current.toFixed(2) + ' ₺';
         }, 1000 / fps);
     }
     function playSailAway() {
@@ -996,7 +996,7 @@
         balanceValueEl.textContent = demoBalance.toFixed(2);
         resultMultEl.textContent = 'm' + multiplier.toFixed(2);
         lastMultEl.textContent   = multiplier.toFixed(2) + 'm';
-        cashoutAmount.textContent = win.toFixed(2) + ' ₹';
+        cashoutAmount.textContent = win.toFixed(2) + ' ₺';
 
         multiplierEl.classList.add('hidden');
         resultBlock.classList.remove('hidden');
@@ -1067,6 +1067,7 @@
 </body>
 
 </html>
+
 
 
 
