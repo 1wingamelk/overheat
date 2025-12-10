@@ -109,24 +109,34 @@
         }
 
         /* ---------- Отображение текущего выигрыша ---------- */
+        .win-display-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
         .live-win-display {
             position: absolute;
-            top: -40px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 5;
-            pointer-events: none;
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 22px;
+            font-weight: 800;
             color: #7dff9d;
-            text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 4px rgba(125,255,157,0.5);
+            text-shadow: 0 0 10px rgba(0,0,0,1), 0 0 6px rgba(125,255,157,0.7), 0 0 3px rgba(125,255,157,0.5);
             white-space: nowrap;
-            transition: left 0.08s linear, top 0.08s linear;
             opacity: 0;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(2px);
+            padding: 6px 14px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            border: 2px solid rgba(125, 255, 157, 0.3);
+            transition: left 0.05s linear, top 0.05s linear;
+            z-index: 6;
         }
 
         .live-win-display.visible {
@@ -533,6 +543,9 @@
         </div>
     </div>
 
+    <!-- Отображение текущего выигрыша (отдельный контейнер) -->
+    <div class="win-display-container" id="winDisplayContainer"></div>
+
     <!-- Водные частицы -->
     <div class="water-fx" id="waterFx"></div>
 
@@ -548,9 +561,8 @@
     <!-- Текущий множитель -->
     <div class="multiplier" id="multiplierDisplay">m1.00</div>
 
-    <!-- Лодка + шлейф + отображение выигрыша -->
+    <!-- Лодка + шлейф -->
     <div class="boat-area">
-        <div class="live-win-display" id="liveWinDisplay">0.00 ₽</div>
         <div class="boat-wrap" id="boatWrap">
             <div class="boat-wake" id="boatWake"></div>
             <div class="boat" id="boat"></div>
@@ -606,7 +618,7 @@
     const gameEl       = document.querySelector('.game');
     const waterFx      = document.getElementById('waterFx');
     const multiplierEl = document.getElementById('multiplierDisplay');
-    const liveWinDisplay = document.getElementById('liveWinDisplay');
+    const winDisplayContainer = document.getElementById('winDisplayContainer');
 
     const boatWrap     = document.getElementById('boatWrap');
     const boatEl       = document.getElementById('boat');
@@ -668,6 +680,7 @@
     let growTimer = null;
     let demoBalance = 10000;
     let currentBet = 0;
+    let winDisplayElement = null;
 
     // Текущие настройки языка и валюты
     let currentLang = 'ru';
@@ -730,7 +743,7 @@
         },
         tr: {
             hold_to_start: "Başlamak için basılı tutun",
-            more_bets: "Daha fazla bahis",
+            more_bets: "Daha fazла bahis",
             cashout: "ÇEKİL",
             autoplay: "Otomatik Oyun",
             balance: "Bakiye:",
@@ -824,44 +837,59 @@
         }
     });
 
-    /* -------- Отображение текущего выигрыша -------- */
-    function updateLiveWinDisplay() {
-        const currentWin = (currentBet || 0) * multiplier;
-        const displayText = currentWin.toFixed(2) + ' ' + currencySymbol;
-        liveWinDisplay.textContent = displayText;
+    /* -------- Отображение текущего выигрыша НАД лодкой -------- */
+    function createWinDisplay() {
+        if (winDisplayElement) {
+            winDisplayElement.remove();
+        }
+        
+        winDisplayElement = document.createElement('div');
+        winDisplayElement.className = 'live-win-display';
+        winDisplayElement.textContent = '0.00 ' + currencySymbol;
+        winDisplayContainer.appendChild(winDisplayElement);
     }
 
-    function positionLiveWinDisplay() {
-        if (state !== 'running') return;
+    function updateLiveWinDisplay() {
+        if (!winDisplayElement) return;
+        
+        const currentWin = (currentBet || 0) * multiplier;
+        winDisplayElement.textContent = currentWin.toFixed(2) + ' ' + currencySymbol;
+    }
+
+    function positionWinDisplay() {
+        if (!winDisplayElement || state !== 'running') return;
         
         const gameRect = gameEl.getBoundingClientRect();
         const boatRect = boatWrap.getBoundingClientRect();
         
-        // Позиция по X относительно лодки
+        // Позиция по X - центр лодки
         const boatCenterX = boatRect.left + boatRect.width / 2;
         const displayLeft = boatCenterX - gameRect.left;
         
-        // Ограничиваем, чтобы не выходило за экран
-        const minX = 50;
-        const maxX = gameRect.width - 50;
+        // Позиция по Y - НАД лодкой (выше её модели)
+        const displayTop = boatRect.top - gameRect.top - 60; // 60px над лодкой
+        
+        // Ограничиваем по X, чтобы не выходило за экран
+        const minX = 70; // С учетом ширины самого дисплея
+        const maxX = gameRect.width - 70;
         const clampedX = Math.max(minX, Math.min(maxX, displayLeft));
         
-        liveWinDisplay.style.left = clampedX + 'px';
-        
-        // Позиция по Y - фиксированная над лодкой
-        const displayTop = boatRect.top - gameRect.top - 40;
-        liveWinDisplay.style.top = displayTop + 'px';
+        winDisplayElement.style.left = clampedX + 'px';
+        winDisplayElement.style.top = displayTop + 'px';
     }
 
-    function initLiveWin() {
-        currentBet = getBet();
-        updateLiveWinDisplay();
-        positionLiveWinDisplay();
-        liveWinDisplay.classList.add('visible');
+    function showWinDisplay() {
+        if (!winDisplayElement) {
+            createWinDisplay();
+        }
+        winDisplayElement.classList.add('visible');
+        positionWinDisplay();
     }
 
-    function hideLiveWin() {
-        liveWinDisplay.classList.remove('visible');
+    function hideWinDisplay() {
+        if (winDisplayElement) {
+            winDisplayElement.classList.remove('visible');
+        }
     }
 
     /* -------- Лодка: спрайт -------- */
@@ -897,13 +925,15 @@
         const t = Math.max(-1, Math.min(1, boatOffsetX / denom));
         const angle = t * maxAngle;
         boatWrap.style.transform = `translateX(${boatOffsetX}px) rotate(${angle}deg)`;
+        
+        // Обновляем позицию отображения выигрыша
+        positionWinDisplay();
     }
 
     function boatTurnLoop() {
         if (!turning) return;
         boatOffsetX += (boatTargetOffsetX - boatOffsetX) * 0.18;
         applyBoatTransform();
-        positionLiveWinDisplay();
         requestAnimationFrame(boatTurnLoop);
     }
 
@@ -922,7 +952,8 @@
         
         // Инициализируем отображение выигрыша
         currentBet = getBet();
-        initLiveWin();
+        showWinDisplay();
+        updateLiveWinDisplay();
         
         boatTurnLoop();
 
@@ -930,6 +961,7 @@
             multiplier += 0.02;
             updateMultiplierUI();
             updateLiveWinDisplay();
+            positionWinDisplay(); // Обновляем позицию при росте
         }, 40);
     }
 
@@ -990,7 +1022,7 @@
         if (target < -maxBoatOffset) target = -maxBoatOffset;
 
         boatTargetOffsetX = target;
-        positionLiveWinDisplay();
+        positionWinDisplay(); // Обновляем позицию при движении
     }
 
     /* -------- Сундуки -------- */
@@ -1329,7 +1361,7 @@
 
         animateWinAmount(win);
         playSailAway();
-        hideLiveWin();
+        hideWinDisplay();
     }
     
     function resetGame() {
@@ -1345,7 +1377,7 @@
         boatOffsetX = 0;
         applyBoatTransform();
         clearAllChests();
-        hideLiveWin();
+        hideWinDisplay();
         
         // Сбрасываем анимацию уплытия
         boatWrap.classList.remove('sail-away');
