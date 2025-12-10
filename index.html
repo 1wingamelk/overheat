@@ -6,9 +6,109 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <style>
-        /* ... все предыдущие стили остаются ... */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(#0079c9, #0059a5);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .game {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
 
-        /* Новый стиль для отображения текущего выигрыша */
+        .hidden { display: none !important; }
+
+        :root {
+            --boat-frames: 30;
+            --wake-frames: 30;
+            --chest-frames: 30;
+        }
+
+        /* ---------- Языковая панель ---------- */
+        .language-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        
+        .language-toggle:hover {
+            opacity: 1;
+        }
+        
+        .language-panel {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 99;
+            display: none;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .language-panel.visible {
+            display: block;
+        }
+        
+        .language-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .language-option:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .language-option.active {
+            background: rgba(77, 165, 255, 0.3);
+        }
+        
+        .flag {
+            width: 24px;
+            height: 16px;
+            margin-right: 10px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 2px;
+        }
+        
+        .language-name {
+            flex-grow: 1;
+        }
+        
+        .currency-symbol {
+            font-weight: bold;
+            color: #7dff9d;
+        }
+
+        /* ---------- Отображение текущего выигрыша ---------- */
         .live-win-display {
             position: absolute;
             top: -40px;
@@ -19,21 +119,434 @@
             font-size: 20px;
             font-weight: 700;
             color: #7dff9d;
-            text-shadow: 0 0 6px rgba(0,0,0,0.9);
+            text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 4px rgba(125,255,157,0.5);
             white-space: nowrap;
-            transition: left 0.1s linear;
+            transition: left 0.08s linear, top 0.08s linear;
             opacity: 0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
         }
 
         .live-win-display.visible {
             opacity: 1;
+        }
+
+        /* ---------- Водные частицы ---------- */
+        .water-fx {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bubble {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 0 6px rgba(255,255,255,0.9);
+            opacity: 0.9;
+            animation: bubbleUp 2.4s linear forwards;
+        }
+        @keyframes bubbleUp {
+            0%   { transform: translate(-50%,0) scale(1);   opacity: .9; }
+            100% { transform: translate(-50%,-40px) scale(.4); opacity: 0; }
+        }
+
+        .water-wave {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(160,210,255,0.5);
+            background: radial-gradient(circle, rgba(160,210,255,0.35), transparent 60%);
+            opacity: 0.8;
+            pointer-events: none;
+            animation: waveExpand 2.5s ease-out forwards;
+        }
+        @keyframes waveExpand {
+            0%   { transform: translate(-50%,-50%) scale(.4); opacity:.7; }
+            100% { transform: translate(-50%,-50%) scale(3.3); opacity:0; }
+        }
+
+        /* ---------- Боковой фон (острова) ---------- */
+        .sides {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .side {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 130px;
+        }
+        .side.left  {
+            left: -130px;
+            transform: scaleX(-1);
+            transform-origin: right center;
+        }
+        .side.right { right: 0; }
+
+        .bg-strip {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 130vh;
+            background-size: auto 33.333%;
+            background-position: right top;
+            background-repeat: no-repeat;
+            will-change: transform;
+        }
+
+        /* ---------- Слой сундуков ---------- */
+        .chests-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .chest {
+            position: absolute;
+            width: 54px;
+            height: 54px;
+            transform: translate(-50%, -50%);
+            background-size: calc(var(--chest-frames) * 100%) 100%;
+            background-position: 0% 0%;
+            background-repeat: no-repeat;
+        }
+
+        /* ---------- Верхний множитель ---------- */
+        .multiplier {
+            position: relative;
+            z-index: 3;
+            margin-top: 40px;
+            font-size: 40px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* ---------- Лодка + шлейф ---------- */
+        .boat-area {
+            position: relative;
+            z-index: 3;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .boat-wrap {
+            width: 50px;
+            height: 140px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            will-change: transform, opacity;
+            transform-origin: 50% 70%;
+            z-index: 3;
+        }
+
+        .boat {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 3;
+            background-image: url("img/c2c0f618-0470-4e03-9f95-449f3f41e764.webp");
+            background-size: calc(var(--boat-frames) * 100%) 100%;
+            background-position: 0% 100%;
+            background-repeat: no-repeat;
+        }
+
+        .boat-wake {
+            position: absolute;
+            z-index: 2;
+            left: 50%;
+            top: 52%;
+            transform: translate(-50%, 0);
+            width: 120px;
+            height: 170px;
+            opacity: 0;
+            background-image: url("img/boat_wake.webp");
+            background-size: calc(var(--wake-frames) * 100%) 100%;
+            background-position: 0% 0%;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%   { transform: translateY(0); }
+            50%  { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        .boat.moving {
+            animation: float 1.4s ease-in-out infinite;
+        }
+
+        @keyframes sail-away {
+            0% {
+                transform: translateX(var(--boat-x, 0)) translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(var(--boat-x, 0)) translateY(-130vh) scale(0.4);
+                opacity: 0;
+            }
+        }
+        .boat-wrap.sail-away {
+            animation: sail-away 1.6s ease-in forwards;
+        }
+
+        /* ---------- Текст бонуса от сундука ---------- */
+        .bonus-text {
+            position: absolute;
+            z-index: 4;
+            pointer-events: none;
+            font-size: 14px;
+            font-weight: 700;
+            color: #7dff9d;
+            text-shadow: 0 0 4px rgba(0,0,0,0.7);
+            animation: chestBonusFloat 0.8s ease-out forwards;
+        }
+        @keyframes chestBonusFloat {
+            0%   { transform: translate(-50%, 0);    opacity: 1; }
+            100% { transform: translate(-50%, -20px); opacity: 0; }
+        }
+
+        /* ---------- Результат ---------- */
+        .result {
+            position: absolute;
+            top: 26%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 4;
+        }
+        .result-mult {
+            font-size: 34px;
+            font-weight: 700;
+            color: #7dff9d;
+        }
+        .result-text {
+            margin-top: 4px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* ---------- Кнопка «удерживать» ---------- */
+        .hold-area {
+            position: relative;
+            z-index: 4;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hold-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: #e0edf8;
+            position: relative;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .hold-btn::before,
+        .hold-btn::after {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: inherit;
+            border: 2px solid rgba(255,255,255,0.7);
+            opacity: 0.5;
+            animation: ripple 1.6s infinite;
+        }
+        .hold-btn::after {
+            inset: -10px;
+            opacity: 0.3;
+            animation-delay: 0.4s;
+        }
+        @keyframes ripple {
+            0%   { transform: scale(0.9); opacity: 0.5; }
+            70%  { transform: scale(1.1); opacity: 0; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        .hold-label {
+            margin-top: 6px;
+            font-size: 12px;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        /* ---------- Панель ставок / кэшаут ---------- */
+        .bet-area {
+            position: relative;
+            z-index: 4;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .bet-header {
+            font-size: 11px;
+            opacity: 0.7;
+            margin: 0 2px 4px;
+        }
+        .bet-main,
+        .cashout-main {
+            border-radius: 14px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+        }
+        .bet-main {
+            background: rgba(0,0,0,0.28);
+        }
+        .bet-main.hidden { display: none; }
+
+        .bet-btn {
+            flex: 0 0 46px;
+            height: 32px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(0,0,0,0.45);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .bet-btn:active { transform: translateY(1px); }
+
+        .bet-amount-input {
+            flex: 1;
+            height: 32px;
+            margin: 0 6px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            text-align: center;
+            font-size: 16px;
+            outline: none;
+        }
+        .bet-amount-input::-webkit-outer-spin-button,
+        .bet-amount-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .bet-amount-input[type=number] { -moz-appearance: textfield; }
+        .bet-amount-input.error { outline: 2px solid #ff6b6b; }
+
+        .cashout-main {
+            margin-top: 6px;
+            width: 100%;
+            height: 46px;
+            border-radius: 18px;
+            background: linear-gradient(90deg,#4da5ff,#61d4ff);
+            color: #ffffff;
+            font-weight: 600;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            display: none;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+        }
+        .cashout-main.visible { display: flex; }
+
+        .cashout-amount {
+            font-size: 17px;
+            line-height: 1.1;
+        }
+        .cashout-label {
+            font-size: 11px;
+            line-height: 1.1;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.95;
+        }
+
+        .bet-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        .autoplay.disabled,
+        .last-mult.disabled { color: rgba(255,255,255,0.5); }
+
+        .balance-bar {
+            position: relative;
+            z-index: 4;
+            width: 100%;
+            margin-top: 4px;
+            font-size: 12px;
+            text-align: right;
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
 <div class="game">
     
-    <!-- ... остальной HTML (языковая панель, вода, стороны и т.д.) ... -->
+    <!-- Языковая панель -->
+    <button class="language-toggle" id="languageToggle">🌐</button>
+    <div class="language-panel" id="languagePanel">
+        <div class="language-option active" data-lang="ru" data-currency="₽" data-flag="🇷🇺">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"white\"/><rect width=\"24\" height=\"5.33\" fill=\"%23003aa0\"/><rect y=\"10.67\" width=\"24\" height=\"5.33\" fill=\"%23d52b1e\"/></svg>')"></div>
+            <span class="language-name">Русский</span>
+            <span class="currency-symbol">₽</span>
+        </div>
+        <div class="language-option" data-lang="en" data-currency="$" data-flag="🇺🇸">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%2300227a\"/><path fill=\"%23fff\" d=\"M0 0h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0zm0 2h24v1H0z\"/><path fill=\"%23bf0a30\" d=\"M0 0h10v9H0z\"/><path fill=\"%23fff\" d=\"M1 1h1v1H1zm2 0h1v1H3zm4 0h1v1H7zm2 0h1v1H9zM0 3h1v1H0zm2 0h1v1H2zm4 0h1v1H6zm6 0h1v1h-1zM1 5h1v1H1zm2 0h1v1H3zm4 0h1v1H7zm2 0h1v1H9zM0 7h1v1H0zm2 0h1v1H2zm4 0h1v1H6zm6 0h1v1h-1z\"/></svg>')"></div>
+            <span class="language-name">English</span>
+            <span class="currency-symbol">$</span>
+        </div>
+        <div class="language-option" data-lang="in" data-currency="₹" data-flag="🇮🇳">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23f93\"/><rect width=\"24\" height=\"5.33\" fill=\"%23fff\"/><rect y=\"10.67\" width=\"24\" height=\"5.33\" fill=\"%23128807\"/><circle cx=\"12\" cy=\"8\" r=\"2.67\" fill=\"%23006699\"/></svg>')"></div>
+            <span class="language-name">हिन्दी</span>
+            <span class="currency-symbol">₹</span>
+        </div>
+        <div class="language-option" data-lang="tr" data-currency="₺" data-flag="🇹🇷">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23e30a17\"/><circle cx=\"12\" cy=\"8\" r=\"4\" fill=\"%23fff\"/><circle cx=\"12.8\" cy=\"8\" r=\"3.2\" fill=\"%23e30a17\"/><path fill=\"%23fff\" d=\"M12 6l1 2h2l-1.5 1.5L15 11l-2-1-1 2v-2l-1-2-2 1 1.5-1.5L9 7l2 1z\"/></svg>')"></div>
+            <span class="language-name">Türkçe</span>
+            <span class="currency-symbol">₺</span>
+        </div>
+        <div class="language-option" data-lang="id" data-currency="Rp" data-flag="🇮🇩">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"8\" fill=\"%23fff\"/><rect y=\"8\" width=\"24\" height=\"8\" fill=\"%23e30a17\"/></svg>')"></div>
+            <span class="language-name">Bahasa Indonesia</span>
+            <span class="currency-symbol">Rp</span>
+        </div>
+        <div class="language-option" data-lang="eu" data-currency="€" data-flag="🇪🇺">
+            <div class="flag" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"16\"><rect width=\"24\" height=\"16\" fill=\"%23003f8d\"/><circle cx=\"12\" cy=\"8\" r=\"4\" fill=\"%23ffcd00\"/><circle cx=\"12\" cy=\"8\" r=\"3.2\" fill=\"%23003f8d\"/><path fill=\"%23ffcd00\" d=\"M12 5l1 2h2l-1.5 1.5L15 11l-2-1-1 2v-2l-1-2-2 1 1.5-1.5L9 7l2 1z\"/></svg>')"></div>
+            <span class="language-name">Euro</span>
+            <span class="currency-symbol">€</span>
+        </div>
+    </div>
+
+    <!-- Водные частицы -->
+    <div class="water-fx" id="waterFx"></div>
+
+    <!-- Боковой фон -->
+    <div class="sides">
+        <div class="side left"  id="sideLeft"></div>
+        <div class="side right" id="sideRight"></div>
+    </div>
+
+    <!-- Слой сундуков -->
+    <div class="chests-layer" id="chestsLayer"></div>
+
+    <!-- Текущий множитель -->
+    <div class="multiplier" id="multiplierDisplay">m1.00</div>
 
     <!-- Лодка + шлейф + отображение выигрыша -->
     <div class="boat-area">
@@ -44,26 +557,280 @@
         </div>
     </div>
 
-    <!-- ... остальной HTML (результат, кнопка удержания, панель ставок) ... -->
+    <!-- Результат -->
+    <div class="result hidden" id="resultBlock">
+        <div class="result-mult" id="resultMult">m1.00</div>
+        <div class="result-text">
+            <span data-translate="you_received">You received</span> <span id="resultWinAmount">0.00</span>
+        </div>
+    </div>
 
+    <!-- Кнопка "удерживайте" -->
+    <div class="hold-area">
+        <button class="hold-btn" id="holdBtn"
+                aria-label="Удерживайте, чтобы сделать ставку"></button>
+        <div class="hold-label" data-translate="hold_to_start">Удерживайте, чтобы начать</div>
+    </div>
+
+    <!-- Панель ставок / кэшаут -->
+    <div class="bet-area">
+        <div class="bet-header" data-translate="more_bets">Больше ставок</div>
+
+        <div class="bet-main" id="betMain">
+            <button class="bet-btn" id="btnHalf">½</button>
+            <button class="bet-btn" id="btnMinus">−</button>
+            <input id="betInput" class="bet-amount-input"
+                   type="number" min="0.01" step="0.01" value="1.00">
+            <button class="bet-btn" id="btnPlus">+</button>
+            <button class="bet-btn" id="btnDouble">x2</button>
+        </div>
+
+        <button class="cashout-main" id="cashoutMain">
+            <div class="cashout-amount">0.00</div>
+            <div class="cashout-label" data-translate="cashout">ЗАБРАТЬ</div>
+        </button>
+
+        <div class="bet-footer">
+            <div class="autoplay disabled" data-translate="autoplay">Автоигра</div>
+            <div class="last-mult disabled" id="lastMult">0.00m</div>
+        </div>
+    </div>
+
+    <div class="balance-bar">
+        <span data-translate="balance">Баланс:</span> <span id="balanceValue">10000.00</span>
+    </div>
 </div>
 
 <script>
-    /* --- DOM ссылки (добавляем новую) --- */
+    /* --- DOM ссылки --- */
+    const gameEl       = document.querySelector('.game');
+    const waterFx      = document.getElementById('waterFx');
+    const multiplierEl = document.getElementById('multiplierDisplay');
     const liveWinDisplay = document.getElementById('liveWinDisplay');
 
-    /* --- Состояние игры (добавляем) --- */
-    let currentWin = 0;
+    const boatWrap     = document.getElementById('boatWrap');
+    const boatEl       = document.getElementById('boat');
+    const wakeEl       = document.getElementById('boatWake');
+    const holdBtn      = document.getElementById('holdBtn');
+
+    const chestsLayer  = document.getElementById('chestsLayer');
+
+    const resultBlock  = document.getElementById('resultBlock');
+    const resultMultEl = document.getElementById('resultMult');
+    const resultWinEl  = document.getElementById('resultWinAmount');
+
+    const betInput     = document.getElementById('betInput');
+    const btnHalf      = document.getElementById('btnHalf');
+    const btnMinus     = document.getElementById('btnMinus');
+    const btnPlus      = document.getElementById('btnPlus');
+    const btnDouble    = document.getElementById('btnDouble');
+    const betMain      = document.getElementById('betMain');
+    const cashoutMain  = document.getElementById('cashoutMain');
+    const cashoutAmount= cashoutMain.querySelector('.cashout-amount');
+    const lastMultEl   = document.getElementById('lastMult');
+    const balanceValueEl = document.getElementById('balanceValue');
+
+    const sideLeft     = document.getElementById('sideLeft');
+    const sideRight    = document.getElementById('sideRight');
+    
+    // Языковые элементы
+    const languageToggle = document.getElementById('languageToggle');
+    const languagePanel = document.getElementById('languagePanel');
+    const languageOptions = document.querySelectorAll('.language-option');
+
+    /* --- Константы --- */
+    const WATER_SPEED  = 120; // px/сек
+
+    // лодка
+    const BOAT_FRAMES   = 30;
+    const BOAT_FPS      = 30;
+    const BOAT_FRAME_MS = 1000 / BOAT_FPS;
+
+    // сундуки
+    const CHEST_IDLE_FRAMES = 25;
+    const CHEST_HIT_FRAMES  = 36;
+    const CHEST_IDLE_FPS    = 25;
+    const CHEST_HIT_FPS     = 35;
+    const CHEST_IDLE_SPRITE = '7cb6bdc9-573b-4b7b-9128-33b3ac9a5781.webp';
+    const CHEST_HIT_SPRITE  = 'f880e728-dfc0-4727-a186-70fdde575079.webp';
+
+    // стороны
+    const SIDE_COUNT  = 22;
+    const SIDE_CHANCE = 0.8;
+    const sideImages  = Array.from(
+        {length: SIDE_COUNT},
+        (_,i) => `img/side${i+1}.webp`
+    );
+
+    /* --- Состояние игры --- */
+    let state = 'idle';          // idle | running | finished
+    let multiplier = 1;
+    let growTimer = null;
+    let demoBalance = 10000;
     let currentBet = 0;
 
-    /* -------- Обновление отображения текущего выигрыша -------- */
+    // Текущие настройки языка и валюты
+    let currentLang = 'ru';
+    let currentCurrency = '₽';
+    let currencySymbol = '₽';
+
+    // лодка: плавный поворот
+    let boatOffsetX = 0;
+    let boatTargetOffsetX = 0;
+    let dragStartX = 0;
+    let dragStartOffset = 0;
+    let activePointerId = null;
+    let maxBoatOffset = 1;
+    let turning = false;
+
+    // лодка: кадры спрайта
+    let boatFrameIndex = 0;
+    let boatFrameTimer = null;
+
+    // сундуки
+    const chests = [];
+    let chestCooldown = 0;
+    let lastChestGroupCenterX = null;
+
+    // стороны
+    const sidePairs = []; // {leftEl,rightEl,baseY,offset}
+    let bgInitialized = false;
+    let scrolling = false;
+    let lastTime = 0;
+
+    // вода
+    let bubbleTimer = 0;
+    let waveTimer   = 0;
+    
+    // Переводы
+    const translations = {
+        ru: {
+            hold_to_start: "Удерживайте, чтобы начать",
+            more_bets: "Больше ставок",
+            cashout: "ЗАБРАТЬ",
+            autoplay: "Автоигра",
+            balance: "Баланс:",
+            you_received: "Вы получили"
+        },
+        en: {
+            hold_to_start: "Hold to start",
+            more_bets: "More bets",
+            cashout: "CASHOUT",
+            autoplay: "Autoplay",
+            balance: "Balance:",
+            you_received: "You received"
+        },
+        in: {
+            hold_to_start: "शुरू करने के लिए होल्ड करें",
+            more_bets: "अधिक बेट",
+            cashout: "कैशआउट",
+            autoplay: "ऑटोप्ले",
+            balance: "बैलेंस:",
+            you_received: "आपको प्राप्त हुआ"
+        },
+        tr: {
+            hold_to_start: "Başlamak için basılı tutun",
+            more_bets: "Daha fazla bahis",
+            cashout: "ÇEKİL",
+            autoplay: "Otomatik Oyun",
+            balance: "Bakiye:",
+            you_received: "Aldınız"
+        },
+        id: {
+            hold_to_start: "Tahan untuk mulai",
+            more_bets: "Taruhan lebih banyak",
+            cashout: "TARIK DANA",
+            autoplay: "Main Otomatis",
+            balance: "Saldo:",
+            you_received: "Anda menerima"
+        },
+        eu: {
+            hold_to_start: "Hold to start",
+            more_bets: "More bets",
+            cashout: "CASHOUT",
+            autoplay: "Autoplay",
+            balance: "Balance:",
+            you_received: "You received"
+        }
+    };
+
+    /* -------- Язык и валюта -------- */
+    function toggleLanguagePanel() {
+        languagePanel.classList.toggle('visible');
+    }
+    
+    function setLanguage(lang, currency) {
+        currentLang = lang;
+        currentCurrency = currency;
+        currencySymbol = currency;
+        
+        // Обновляем активный элемент
+        languageOptions.forEach(option => {
+            if (option.dataset.lang === lang) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+        
+        // Применяем переводы
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[lang] && translations[lang][key]) {
+                element.textContent = translations[lang][key];
+            }
+        });
+        
+        // Обновляем отображение валюты
+        updateCurrencyDisplay();
+        languagePanel.classList.remove('visible');
+    }
+    
+    function updateCurrencyDisplay() {
+        // Обновляем баланс с новой валютой
+        balanceValueEl.textContent = demoBalance.toFixed(2);
+        
+        // Обновляем отображение выигрыша
+        const currentWin = parseFloat(resultWinEl.textContent) || 0;
+        if (currentWin > 0) {
+            resultWinEl.textContent = currentWin.toFixed(2) + ' ' + currencySymbol;
+        }
+        
+        // Обновляем кэшаут
+        const cashoutCurrent = parseFloat(cashoutAmount.textContent) || 0;
+        if (cashoutCurrent > 0) {
+            cashoutAmount.textContent = cashoutCurrent.toFixed(2) + ' ' + currencySymbol;
+        }
+        
+        // Обновляем текущий выигрыш
+        updateLiveWinDisplay();
+    }
+    
+    // Инициализация языковых обработчиков
+    languageToggle.addEventListener('click', toggleLanguagePanel);
+    
+    languageOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const lang = option.dataset.lang;
+            const currency = option.dataset.currency;
+            setLanguage(lang, currency);
+        });
+    });
+    
+    // Закрытие панели при клике вне её
+    document.addEventListener('click', (e) => {
+        if (!languagePanel.contains(e.target) && !languageToggle.contains(e.target)) {
+            languagePanel.classList.remove('visible');
+        }
+    });
+
+    /* -------- Отображение текущего выигрыша -------- */
     function updateLiveWinDisplay() {
-        currentWin = (currentBet || 0) * multiplier;
+        const currentWin = (currentBet || 0) * multiplier;
         const displayText = currentWin.toFixed(2) + ' ' + currencySymbol;
         liveWinDisplay.textContent = displayText;
     }
 
-    /* -------- Позиционирование отображения выигрыша -------- */
     function positionLiveWinDisplay() {
         if (state !== 'running') return;
         
@@ -86,7 +853,6 @@
         liveWinDisplay.style.top = displayTop + 'px';
     }
 
-    /* -------- Инициализация выигрыша при старте -------- */
     function initLiveWin() {
         currentBet = getBet();
         updateLiveWinDisplay();
@@ -94,13 +860,58 @@
         liveWinDisplay.classList.add('visible');
     }
 
-    /* -------- Скрытие отображения выигрыша -------- */
     function hideLiveWin() {
         liveWinDisplay.classList.remove('visible');
-        currentWin = 0;
     }
 
-    /* -------- Модифицированная функция startGrowing -------- */
+    /* -------- Лодка: спрайт -------- */
+    function updateBoatFrame() {
+        const p = (boatFrameIndex / (BOAT_FRAMES - 1)) * 100;
+        boatEl.style.backgroundPosition = `${p}% 100%`;
+        wakeEl.style.backgroundPosition = `${p}% 0%`;
+    }
+
+    function startBoatFrames() {
+        stopBoatFrames();
+        boatFrameIndex = 0;
+        updateBoatFrame();
+        wakeEl.style.opacity = 0.85;
+        boatFrameTimer = setInterval(() => {
+            boatFrameIndex = (boatFrameIndex + 1) % BOAT_FRAMES;
+            updateBoatFrame();
+        }, BOAT_FRAME_MS);
+    }
+
+    function stopBoatFrames() {
+        if (boatFrameTimer) {
+            clearInterval(boatFrameTimer);
+            boatFrameTimer = null;
+        }
+        wakeEl.style.opacity = 0;
+    }
+
+    /* -------- Лодка: плавный поворот -------- */
+    function applyBoatTransform() {
+        const maxAngle = 18;
+        const denom = maxBoatOffset || 1;
+        const t = Math.max(-1, Math.min(1, boatOffsetX / denom));
+        const angle = t * maxAngle;
+        boatWrap.style.transform = `translateX(${boatOffsetX}px) rotate(${angle}deg)`;
+    }
+
+    function boatTurnLoop() {
+        if (!turning) return;
+        boatOffsetX += (boatTargetOffsetX - boatOffsetX) * 0.18;
+        applyBoatTransform();
+        positionLiveWinDisplay();
+        requestAnimationFrame(boatTurnLoop);
+    }
+
+    /* -------- Множитель -------- */
+    function updateMultiplierUI() {
+        multiplierEl.textContent = 'm' + multiplier.toFixed(2);
+    }
+
     function startGrowing() {
         multiplier = 1;
         updateMultiplierUI();
@@ -108,29 +919,64 @@
         boatEl.classList.add('moving');
         startBoatFrames();
         turning = true;
-        boatTurnLoop();
         
         // Инициализируем отображение выигрыша
         currentBet = getBet();
         initLiveWin();
+        
+        boatTurnLoop();
 
         growTimer = setInterval(() => {
             multiplier += 0.02;
             updateMultiplierUI();
-            updateLiveWinDisplay(); // Обновляем выигрыш в реальном времени
+            updateLiveWinDisplay();
         }, 40);
     }
 
-    /* -------- Модифицированная функция обновления позиции лодки -------- */
-    function boatTurnLoop() {
-        if (!turning) return;
-        boatOffsetX += (boatTargetOffsetX - boatOffsetX) * 0.18;
-        applyBoatTransform();
-        positionLiveWinDisplay(); // Обновляем позицию отображения выигрыша
-        requestAnimationFrame(boatTurnLoop);
+    function stopGrowing() {
+        clearInterval(growTimer);
+        growTimer = null;
+        boatEl.classList.remove('moving');
+        stopBoatFrames();
+        turning = false;
     }
 
-    /* -------- Модифицированная функция handleBoatMove -------- */
+    /* -------- Ставка -------- */
+    function getBet() {
+        const v = parseFloat(String(betInput.value).replace(',', '.'));
+        if (isNaN(v) || v <= 0) return null;
+        return v;
+    }
+    
+    function setBet(v) {
+        if (!v || v <= 0) v = 0.01;
+        betInput.value = v.toFixed(2);
+    }
+    
+    // Функция для уменьшения баланса при ставке
+    function placeBet() {
+        const bet = getBet();
+        if (!bet) return false;
+        
+        if (demoBalance >= bet) {
+            demoBalance -= bet;
+            balanceValueEl.textContent = demoBalance.toFixed(2);
+            return true;
+        } else {
+            // Недостаточно средств
+            betInput.classList.add('error');
+            return false;
+        }
+    }
+    
+    const BET_STEP = 1;
+    btnHalf  .addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)/2); });
+    btnDouble.addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)*2); });
+    btnMinus .addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)-BET_STEP); });
+    btnPlus  .addEventListener('click', () => { if (state==='idle') setBet((getBet()||0)+BET_STEP); });
+    betInput .addEventListener('change', () => setBet(getBet()));
+
+    /* -------- Движение лодки (таргет-позиция) -------- */
     function handleBoatMove(e) {
         if (state !== 'running') return;
         if (e.pointerId !== activePointerId) return;
@@ -144,92 +990,150 @@
         if (target < -maxBoatOffset) target = -maxBoatOffset;
 
         boatTargetOffsetX = target;
-        positionLiveWinDisplay(); // Обновляем позицию при движении
+        positionLiveWinDisplay();
     }
 
-    /* -------- Модифицированная функция resetGame -------- */
-    function resetGame() {
-        state = 'idle';
-        multiplier = 1;
-        updateMultiplierUI();
-        multiplierEl.classList.remove('hidden');
+    /* -------- Сундуки -------- */
+    function spawnChestAtX(x, y) {
+        const el = document.createElement('div');
+        el.className = 'chest';
+        el.style.backgroundImage = `url("img/${CHEST_IDLE_SPRITE}")`;
+        chestsLayer.appendChild(el);
 
-        resultBlock.classList.add('hidden');
-        betMain.classList.remove('hidden');
-        cashoutMain.classList.remove('visible');
-        boatTargetOffsetX = 0;
-        boatOffsetX = 0;
-        applyBoatTransform();
-        clearAllChests();
-        hideLiveWin(); // Скрываем отображение выигрыша
+        const chest = {
+            el,
+            x,
+            y,
+            state: 'idle',
+            frame: 0,
+            timer: null
+        };
+        chests.push(chest);
+        updateChestElement(chest);
+        startChestIdleAnimation(chest);
     }
 
-    /* -------- Модифицированная функция showResult -------- */
-    function showResult() {
-        const bet = getBet();
-        const win = bet * multiplier;
-        demoBalance += win;
-        balanceValueEl.textContent = demoBalance.toFixed(2);
-        resultMultEl.textContent = 'm' + multiplier.toFixed(2);
-        lastMultEl.textContent   = multiplier.toFixed(2) + 'm';
-        cashoutAmount.textContent = win.toFixed(2) + ' ' + currencySymbol;
+    function spawnChestGroup() {
+        const gameRect = gameEl.getBoundingClientRect();
+        const laneWidth = gameRect.width * 0.5;
+        const centerX = gameRect.width / 2;
 
-        multiplierEl.classList.add('hidden');
-        resultBlock.classList.remove('hidden');
-        betMain.classList.add('hidden');
-        cashoutMain.classList.add('visible');
+        // распределение: 1 ~70%, 2 ~20%, 3 ~10%
+        const r = Math.random();
+        let count;
+        if (r < 0.7) count = 1;
+        else if (r < 0.9) count = 2;
+        else count = 3;
 
-        animateWinAmount(win);
-        playSailAway();
-        hideLiveWin(); // Скрываем отображение выигрыша
+        const spacing = 62;
+
+        const groupHalfWidth = (count - 1) * spacing / 2;
+        const laneHalf = laneWidth/2 - groupHalfWidth - 20;
+        let baseCenter = centerX + (Math.random()*2 - 1) * laneHalf;
+
+        if (lastChestGroupCenterX !== null &&
+            Math.abs(baseCenter - lastChestGroupCenterX) < spacing * 0.6) {
+            baseCenter += (baseCenter < centerX ? -1 : 1) * spacing;
+        }
+        const minCenter = centerX - laneWidth/2 + groupHalfWidth + 20;
+        const maxCenter = centerX + laneWidth/2 - groupHalfWidth - 20;
+        if (baseCenter < minCenter) baseCenter = minCenter;
+        if (baseCenter > maxCenter) baseCenter = maxCenter;
+        lastChestGroupCenterX = baseCenter;
+
+        const baseY = -40 - Math.random()*60;
+
+        for (let i = 0; i < count; i++) {
+            const offset = (i - (count-1)/2) * spacing;
+            let x = baseCenter + offset + (Math.random()*2 - 1) * 10;
+            const minX = centerX - laneWidth/2 + 30;
+            const maxX = centerX + laneWidth/2 - 30;
+            if (x < minX) x = minX;
+            if (x > maxX) x = maxX;
+
+            const y = baseY + (Math.random()*2 - 1) * 10;
+            spawnChestAtX(x, y);
+        }
     }
 
-    /* -------- Модифицированная обработка кнопки удержания -------- */
-    holdBtn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        if (state !== 'idle') return;
-        
-        const bet = getBet();
-        if (!bet) {
-            betInput.classList.add('error');
-            return;
-        }
-        
-        if (!placeBet()) {
-            return;
-        }
-        
-        betInput.classList.remove('error');
-        state = 'running';
-        resultBlock.classList.add('hidden');
-        boatWrap.classList.remove('sail-away');
-        activePointerId = e.pointerId;
-        holdBtn.setPointerCapture(e.pointerId);
-        dragStartX = e.clientX;
-        dragStartOffset = boatOffsetX;
-        startGrowing();
-        startBgScroll();
-    });
+    function startChestIdleAnimation(ch) {
+        if (ch.timer) { clearInterval(ch.timer); ch.timer = null; }
+        ch.state = 'idle';
+        ch.frame = 0;
+        ch.el.style.backgroundImage = `url("img/${CHEST_IDLE_SPRITE}")`;
+        ch.el.style.backgroundPosition = '0% 0%';
+        ch.el.style.backgroundSize = `${CHEST_IDLE_FRAMES * 100}% 100%`;
 
-    /* -------- Обновление валюты -------- */
-    function updateCurrencyDisplay() {
-        balanceValueEl.textContent = demoBalance.toFixed(2);
-        
-        const currentWin = parseFloat(resultWinEl.textContent) || 0;
-        if (currentWin > 0) {
-            resultWinEl.textContent = currentWin.toFixed(2) + ' ' + currencySymbol;
-        }
-        
-        const cashoutCurrent = parseFloat(cashoutAmount.textContent) || 0;
-        if (cashoutCurrent > 0) {
-            cashoutAmount.textContent = cashoutCurrent.toFixed(2) + ' ' + currencySymbol;
-        }
-        
-        // Обновляем отображение текущего выигрыша
-        updateLiveWinDisplay();
+        const frameMs = 1000 / CHEST_IDLE_FPS;
+        ch.timer = setInterval(() => {
+            if (ch.state !== 'idle') return;
+            ch.frame = (ch.frame + 1) % CHEST_IDLE_FRAMES;
+            const p = (ch.frame / (CHEST_IDLE_FRAMES - 1)) * 100;
+            ch.el.style.backgroundPosition = `${p}% 0%`;
+        }, frameMs);
     }
 
-    /* -------- Обработка сундуков -------- */
+    function startChestHitAnimation(ch) {
+        if (ch.timer) { clearInterval(ch.timer); ch.timer = null; }
+        ch.state = 'hit';
+        ch.frame = 0;
+        ch.el.style.backgroundImage = `url("img/${CHEST_HIT_SPRITE}")`;
+        ch.el.style.backgroundPosition = '0% 0%';
+        ch.el.style.backgroundSize = `${CHEST_HIT_FRAMES * 100}% 100%`;
+
+        const frameMs = 1000 / CHEST_HIT_FPS;
+        ch.timer = setInterval(() => {
+            if (ch.state !== 'hit') return;
+            ch.frame++;
+            if (ch.frame >= CHEST_HIT_FRAMES) {
+                clearInterval(ch.timer);
+                ch.timer = null;
+                ch.state = 'dead';
+                ch.el.remove();
+                const idx = chests.indexOf(ch);
+                if (idx !== -1) chests.splice(idx, 1);
+                return;
+            }
+            const p = (ch.frame / (CHEST_HIT_FRAMES - 1)) * 100;
+            ch.el.style.backgroundPosition = `${p}% 0%`;
+        }, frameMs);
+    }
+
+    function updateChestElement(ch) {
+        ch.el.style.left = ch.x + 'px';
+        ch.el.style.top  = ch.y + 'px';
+    }
+
+    function updateChests(dt) {
+        const gameRect = gameEl.getBoundingClientRect();
+        for (let i = chests.length - 1; i >= 0; i--) {
+            const ch = chests[i];
+            if (ch.state === 'hit' || ch.state === 'dead') continue;
+            ch.y += WATER_SPEED * dt;
+            updateChestElement(ch);
+            if (ch.y > gameRect.height + 60) {
+                if (ch.timer) clearInterval(ch.timer);
+                ch.el.remove();
+                chests.splice(i, 1);
+            }
+        }
+    }
+
+    function showChestBonus(ch, bonus) {
+        const gameRect  = gameEl.getBoundingClientRect();
+        const chestRect = ch.el.getBoundingClientRect();
+        const x = chestRect.left + chestRect.width / 2 - gameRect.left;
+        const y = chestRect.top  - gameRect.top - 10;
+
+        const el = document.createElement('div');
+        el.className = 'bonus-text';
+        el.textContent = '+m' + bonus.toFixed(2);
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+        gameEl.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+
     function checkChestCollisions() {
         if (state !== 'running') return;
         const boatRect = boatWrap.getBoundingClientRect();
@@ -248,15 +1152,260 @@
                 const bonus = 0.2 + Math.random() * 4.8;
                 multiplier += bonus;
                 updateMultiplierUI();
-                updateLiveWinDisplay(); // Обновляем выигрыш при подборе сундука
+                updateLiveWinDisplay();
                 showChestBonus(ch, bonus);
             }
         }
     }
 
-    /* -------- Инициализация -------- */
-    // ... остальной код инициализации остается без изменений ...
+    function clearAllChests() {
+        for (const ch of chests) {
+            if (ch.timer) clearInterval(ch.timer);
+            ch.el.remove();
+        }
+        chests.length = 0;
+        chestCooldown = 0;
+        lastChestGroupCenterX = null;
+    }
 
+    /* -------- Стороны: 22 картинки, парами + вертикальный сдвиг ---------- */
+    function randomSideImage() {
+        const idx = Math.floor(Math.random() * SIDE_COUNT);
+        return sideImages[idx];
+    }
+
+    function assignSidePair(pair) {
+        if (Math.random() > SIDE_CHANCE) {
+            pair.leftEl.style.backgroundImage  = 'none';
+            pair.rightEl.style.backgroundImage = 'none';
+            pair.offset = 0;
+            return;
+        }
+        const leftSrc  = randomSideImage();
+        const rightSrc = randomSideImage();
+        pair.leftEl.style.backgroundImage  = `url("${leftSrc}")`;
+        pair.rightEl.style.backgroundImage = `url("${rightSrc}")`;
+        pair.offset = (Math.random()*2 - 1) * 80;
+    }
+
+    function initBackground() {
+        if (bgInitialized) return;
+        bgInitialized = true;
+        const vh = window.innerHeight;
+
+        for (let i = 0; i < 2; i++) {
+            const leftStrip  = document.createElement('div');
+            const rightStrip = document.createElement('div');
+            leftStrip.className  = 'bg-strip';
+            rightStrip.className = 'bg-strip';
+            sideLeft.appendChild(leftStrip);
+            sideRight.appendChild(rightStrip);
+
+            const baseY = (i === 0) ? 0 : -vh;
+            const pair = { leftEl: leftStrip, rightEl: rightStrip, baseY, offset: 0 };
+            assignSidePair(pair);
+            leftStrip.style.transform  = `translateY(${pair.baseY + pair.offset/2}px)`;
+            rightStrip.style.transform = `translateY(${pair.baseY - pair.offset/2}px)`;
+            sidePairs.push(pair);
+        }
+    }
+
+    /* -------- Вода: частицы, волны -------- */
+    function spawnBubble() {
+        const el = document.createElement('div');
+        el.className = 'bubble';
+        const rect = gameEl.getBoundingClientRect();
+        const x = Math.random() * rect.width;
+        const y = Math.random() * rect.height;
+        const size = 3 + Math.random() * 3;
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+        el.style.width  = size + 'px';
+        el.style.height = size + 'px';
+        waterFx.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    function spawnWave() {
+        const el = document.createElement('div');
+        el.className = 'water-wave';
+        const rect = gameEl.getBoundingClientRect();
+        const x = Math.random() * rect.width;
+        const y = rect.height * 0.3 + Math.random()*rect.height*0.4;
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+        waterFx.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    /* -------- Фоновый loop -------- */
+    function startBgScroll() {
+        initBackground();
+        if (scrolling) return;
+        scrolling = true;
+        lastTime = performance.now();
+        requestAnimationFrame(bgLoop);
+    }
+    
+    function stopBgScroll() { scrolling = false; }
+
+    function bgLoop(time) {
+        if (!scrolling) return;
+        const dt = (time - lastTime)/1000;
+        lastTime = time;
+        const vh = window.innerHeight;
+
+        // стороны
+        sidePairs.forEach(p => {
+            p.baseY += WATER_SPEED*dt;
+            if (p.baseY >= vh) {
+                p.baseY -= vh*2;
+                assignSidePair(p);
+            }
+            p.leftEl.style.transform  = `translateY(${p.baseY + p.offset/2}px)`;
+            p.rightEl.style.transform = `translateY(${p.baseY - p.offset/2}px)`;
+        });
+
+        // сундуки
+        updateChests(dt);
+        chestCooldown -= dt;
+        if (chestCooldown <= 0) {
+            if (Math.random() < 0.5) {
+                spawnChestGroup();
+            }
+            chestCooldown = 4 + Math.random() * 4;
+        }
+        checkChestCollisions();
+
+        // вода
+        bubbleTimer -= dt;
+        if (bubbleTimer <= 0) {
+            spawnBubble();
+            bubbleTimer = 0.15 + Math.random() * 0.4;
+        }
+        waveTimer -= dt;
+        if (waveTimer <= 0) {
+            spawnWave();
+            waveTimer = 1.2 + Math.random() * 1.5;
+        }
+
+        requestAnimationFrame(bgLoop);
+    }
+
+    /* -------- Результат и уплытие -------- */
+    function animateWinAmount(target) {
+        let current = 0;
+        const duration = 800;
+        const fps = 30;
+        const step = target / (duration / (1000 / fps));
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            resultWinEl.textContent = current.toFixed(2) + ' ' + currencySymbol;
+        }, 1000 / fps);
+    }
+    
+    function playSailAway() {
+        boatWrap.style.setProperty('--boat-x', boatOffsetX + 'px');
+        boatWrap.classList.add('sail-away');
+    }
+    
+    function showResult() {
+        const bet = getBet();
+        const win = bet * multiplier;
+        demoBalance += win;
+        balanceValueEl.textContent = demoBalance.toFixed(2);
+        resultMultEl.textContent = 'm' + multiplier.toFixed(2);
+        lastMultEl.textContent   = multiplier.toFixed(2) + 'm';
+        cashoutAmount.textContent = win.toFixed(2) + ' ' + currencySymbol;
+
+        multiplierEl.classList.add('hidden');
+        resultBlock.classList.remove('hidden');
+        betMain.classList.add('hidden');
+        cashoutMain.classList.add('visible');
+
+        animateWinAmount(win);
+        playSailAway();
+        hideLiveWin();
+    }
+    
+    function resetGame() {
+        state = 'idle';
+        multiplier = 1;
+        updateMultiplierUI();
+        multiplierEl.classList.remove('hidden');
+
+        resultBlock.classList.add('hidden');
+        betMain.classList.remove('hidden');
+        cashoutMain.classList.remove('visible');
+        boatTargetOffsetX = 0;
+        boatOffsetX = 0;
+        applyBoatTransform();
+        clearAllChests();
+        hideLiveWin();
+        
+        // Сбрасываем анимацию уплытия
+        boatWrap.classList.remove('sail-away');
+        boatWrap.style.transform = 'translateX(0px) rotate(0deg)';
+    }
+    
+    cashoutMain.addEventListener('click', resetGame);
+
+    /* -------- Удержание кнопки -------- */
+    holdBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (state !== 'idle') return;
+        
+        // Проверяем и делаем ставку
+        const bet = getBet();
+        if (!bet) {
+            betInput.classList.add('error');
+            return;
+        }
+        
+        // Уменьшаем баланс при ставке
+        if (!placeBet()) {
+            // Недостаточно средств
+            return;
+        }
+        
+        betInput.classList.remove('error');
+        state = 'running';
+        resultBlock.classList.add('hidden');
+        boatWrap.classList.remove('sail-away');
+        activePointerId = e.pointerId;
+        holdBtn.setPointerCapture(e.pointerId);
+        dragStartX = e.clientX;
+        dragStartOffset = boatOffsetX;
+        startGrowing();
+        startBgScroll();
+    });
+    
+    holdBtn.addEventListener('pointermove', handleBoatMove);
+    
+    ['pointerup','pointerleave','pointercancel'].forEach(ev => {
+        holdBtn.addEventListener(ev, (e) => {
+            e.preventDefault();
+            if (state !== 'running') return;
+            if (e.pointerId === activePointerId) {
+                try { holdBtn.releasePointerCapture(e.pointerId); } catch(_) {}
+                activePointerId = null;
+            }
+            state = 'finished';
+            stopGrowing();
+            stopBgScroll();
+            showResult();
+        });
+    });
+
+    /* -------- Старт -------- */
+    setBet(getBet() || 1);
+    updateMultiplierUI();
+    balanceValueEl.textContent = demoBalance.toFixed(2);
+    applyBoatTransform();
 </script>
 </body>
 </html>
